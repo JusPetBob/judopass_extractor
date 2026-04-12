@@ -1,96 +1,20 @@
-name: Build
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+
 jobs:
-  build-debug-android:
-    name: Build for Android
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:22.04
-    env:
-      BUILDOZER_ALLOW_ROOT: "1"
-      ANDROID_SDK_ROOT: /opt/android-sdk
-      ANDROID_NDK_ROOT: /opt/android-sdk/ndk/android-ndk-r25b
-
+  build:
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          apt update
-          DEBIAN_FRONTEND=noninteractive apt install -y \
-            python3-pip python3-venv python3 \
-            git zip unzip wget \
-            openjdk-17-jdk \
-            libncurses5 libncurses5-dev \
-            libstdc++6 zlib1g-dev \
-            autoconf automake libtool libtool-bin \
-            pkg-config libffi-dev libssl-dev \
-            build-essential ccache m4 \
-            cmake
-
-      - name: Setup Android SDK
-        run: |
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          mkdir -p /opt/android-sdk/cmdline-tools
-          unzip -q commandlinetools-linux-9477386_latest.zip -d /opt/android-sdk/cmdline-tools
-          mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
-          yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" \
-            "build-tools;34.0.0" \
-            "platforms;android-31"
-          mkdir -p /opt/android-sdk/tools/bin
-          ln -sf /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-                 /opt/android-sdk/tools/bin/sdkmanager
-
-      - name: Accept SDK licenses
-        run: |
-          mkdir -p /opt/android-sdk/licenses
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > /opt/android-sdk/licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> /opt/android-sdk/licenses/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > /opt/android-sdk/licenses/android-sdk-preview-license
-
-      - name: Download NDK r25b
-        run: |
-          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          mkdir -p /opt/android-sdk/ndk
-          unzip -q android-ndk-r25b-linux.zip -d /opt/android-sdk/ndk/
-
-      - name: Setup venv
-        run: |
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install setuptools
-          pip install "cython==0.29.37"
-          pip install buildozer
-
-      - name: Configure buildozer spec
-        run: |
-          sed -i 's|#android.sdk_path =|android.sdk_path = /opt/android-sdk|' buildozer.spec
-          sed -i 's|#android.ndk_path =|android.ndk_path = /opt/android-sdk/ndk/android-ndk-r25b|' buildozer.spec
-          sed -i 's|#android.ndk = .*|android.ndk = 25b|' buildozer.spec
-          # Use latest p4a to get updated pyjnius recipe
-          grep -q "^p4a.branch" buildozer.spec || echo "p4a.branch = develop" >> buildozer.spec
-
+      - uses: actions/checkout@v4
       - name: Build APK
-        run: |
-          . venv/bin/activate
-          echo "y" | buildozer android debug 2>&1 | tee build.log || true
-          # Strip ANSI color codes and show full log
-          cat build.log | sed 's/\x1b\[[0-9;]*m//g' > build_clean.log
-          cat build_clean.log
-          grep -q "BUILD SUCCESSFUL" build_clean.log || exit 1
+        uses: digreatbrian/buildozer-action@v2
+        with:
+          python-version: 3.8
+          buildozer-cmd: buildozer -v android debug
 
-      - name: Upload build log on failure
-        if: failure()
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build_clean.log
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-debug-apk
-          path: bin/*.apk
+          name: package
+          path: ./bin/*.apk
