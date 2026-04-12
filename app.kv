@@ -11,11 +11,9 @@
 
 
 <ScannerScreen>
-    FitImage:
-        source: f"https://picsum.photos/{root.image_size}/{root.image_size}"
-        size_hint: .9, .9
-        pos_hint: {"center_x": .5, "center_y": .5}
-        radius: dp(24)
+    CPreview:
+        id: camera
+        size_hint_y: 1
 
 <ListScreen>
     FitImage:
@@ -32,11 +30,11 @@ MDBoxLayout:
         id: screen_manager
 
         ScannerScreen:
-            name: "List"
+            name: "Scanner"
             
 
         ListScreen:
-            name: "Scanner"
+            name: "List"
             
 
 
