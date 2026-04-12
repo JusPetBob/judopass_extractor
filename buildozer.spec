@@ -95,13 +95,13 @@ fullscreen = 0
 
 # (list) Permissions
 # (See https://python-for-android.readthedocs.io/en/latest/buildoptions/#build-options-1 for all the supported syntaxes and properties)
-#android.permissions = android.permission.INTERNET, (name=android.permission.WRITE_EXTERNAL_STORAGE;maxSdkVersion=18)
+android.permissions = CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 
 # (list) features (adds uses-feature -tags to manifest)
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 31
+android.api = 34
 
 # (int) Minimum API your APK / AAB will support.
 #android.minapi = 21
@@ -333,7 +333,7 @@ android.allow_backup = True
 #p4a.local_recipes =
 
 # (str) Filename to the hook for p4a
-#p4a.hook =
+p4a.hook = camerax_provider/grandle_options.py
 
 # (str) Bootstrap to use for android builds
 # p4a.bootstrap = sdl2

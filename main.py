@@ -1,5 +1,6 @@
 from kivy.lang import Builder
 from kivy.properties import StringProperty, ObjectProperty
+from kivy.utils import platform
 
 from kivymd.app import MDApp
 from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem
@@ -42,4 +43,7 @@ class App(MDApp):
 
 
 if __name__ == "__main__":
+    if platform == "android":
+        from android.permissions import request_permissions, Permissions
+        request_permissions([Permissions.CAMERA])
     App().run()
