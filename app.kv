@@ -1,7 +1,55 @@
+<BaseMDNavigationItem>
+    badge: badge
+    MDNavigationItemIcon:
+        icon: root.icon
+        MDBadge:
+            id: badge
+            text: ""
 
-<MainApp>:
-    Label:
-        font_size: 70  
-        center_x: root.width / 4
-        top: root.top - 50
-        text: "0"
+    MDNavigationItemLabel:
+        text: root.text
+
+
+<ScannerScreen>
+    FitImage:
+        source: f"https://picsum.photos/{root.image_size}/{root.image_size}"
+        size_hint: .9, .9
+        pos_hint: {"center_x": .5, "center_y": .5}
+        radius: dp(24)
+
+<ListScreen>
+    FitImage:
+        source: f"https://picsum.photos/{root.image_size}/{root.image_size}"
+        size_hint: .9, .9
+        pos_hint: {"center_x": .5, "center_y": .5}
+        radius: dp(24)
+
+MDBoxLayout:
+    orientation: "vertical"
+    md_bg_color: self.theme_cls.backgroundColor
+
+    MDScreenManager:
+        id: screen_manager
+
+        ScannerScreen:
+            name: "List"
+            
+
+        ListScreen:
+            name: "Scanner"
+            
+
+
+    MDNavigationBar:
+        on_switch_tabs: app.on_switch_tabs(*args)
+
+        BaseMDNavigationItem:
+            id: scanner_item
+            icon: "camera"
+            text: "Scanner"
+            active: True
+
+        BaseMDNavigationItem:
+            id: list_item
+            icon: "format-list-bulleted"
+            text: "List"
