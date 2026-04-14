@@ -1,52 +1,52 @@
-<BaseMDNavigationItem>
+#:import dp kivy.metrics.dp
+
+# ── Navigation item template ─────────────────────────────────────────────────
+<BaseMDNavigationItem>:
     badge: badge
     MDNavigationItemIcon:
         icon: root.icon
         MDBadge:
             id: badge
             text: ""
-
     MDNavigationItemLabel:
         text: root.text
 
+# ── Screens ───────────────────────────────────────────────────────────────────
+<ScannerScreen>:
+    FloatLayout:
+        CPreview:
+            id: camera
+            size_hint: 1, 1
+        ScannerOverlay:
+            size_hint: 1, 1
+            pos: 0, 0
 
-<ScannerScreen>
-    CPreview:
-        id: camera
-        size_hint_y: 1
-
-<ListScreen>
+<ListScreen>:
     FitImage:
         source: f"https://picsum.photos/{root.image_size}/{root.image_size}"
         size_hint: .9, .9
         pos_hint: {"center_x": .5, "center_y": .5}
         radius: dp(24)
 
+# ── Root layout ───────────────────────────────────────────────────────────────
 MDBoxLayout:
     orientation: "vertical"
     md_bg_color: self.theme_cls.backgroundColor
 
     MDScreenManager:
         id: screen_manager
-
         ScannerScreen:
             name: "Scanner"
-            
-
         ListScreen:
             name: "List"
-            
-
 
     MDNavigationBar:
         on_switch_tabs: app.on_switch_tabs(*args)
-
         BaseMDNavigationItem:
             id: scanner_item
             icon: "camera"
             text: "Scanner"
             active: True
-
         BaseMDNavigationItem:
             id: list_item
             icon: "format-list-bulleted"
