@@ -79,6 +79,6 @@ class App(MDApp):
 
 if __name__ == "__main__":
     if platform == "android":
-        from android.permissions import request_permissions, Permissions
-        request_permissions([Permissions.CAMERA])
+        from android.permissions import request_permissions, Permission
+        request_permissions([Permission.CAMERA])
     App().run()
