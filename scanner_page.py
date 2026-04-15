@@ -83,7 +83,6 @@ class ScannDialog(MDDialog):
         btn_continue.bind(on_release=lambda *_: self.cont())
         
         self._on_continue = on_continue
-        
 
     def show_scan_dialog(
         self,
@@ -103,6 +102,8 @@ class ScannDialog(MDDialog):
         self.open()
     
     def cont(self):
+        self._data["FN"] = self._field_firstname.text
+        self._data["LN"] = self._field_lastname.text
         self.dismiss()
         self._on_continue(self._data)
 

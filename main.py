@@ -1,5 +1,3 @@
-from kivy.lang import Builder
-from kivy.properties import StringProperty, ObjectProperty
 from kivy.utils import platform
 from kivy.clock import Clock
 
@@ -8,19 +6,20 @@ from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem, MDNaviga
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.screenmanager import MDScreenManager
+from kivy.storage.jsonstore import JsonStore
 
 import time
 
 from scanner_page import *
 
-from threading import Thread
+import os
+import pandas as pd
 
 
 class BaseMDNavigationItem(MDNavigationItem):
-    icon = StringProperty()
-    text = StringProperty()
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, icon, text, *args, **kwargs):
+        self.icon = icon
+        self.text = text
         super().__init__(*args, **kwargs)
         Clock.schedule_once(self.builds)
 
@@ -38,7 +37,25 @@ class BaseMDNavigationItem(MDNavigationItem):
 
 # base list screen class
 class ListScreen(MDScreen):
-    pass
+    store:JsonStore
+    path:str
+    df: pd.DataFrame
+
+    def __init__(self, path, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if platform == "android":
+            self.path = os.path.join(path, "data.json")
+        else:
+            self.path = os.path.join(path, "test_app", "data.json")
+        
+        self.store = JsonStore(self.path)
+        self.df = pd.DataFrame(columns=['FN', 'LN', 'val', 'exp', 'iss', 'UID', 'NO', 'CID', 'ID', 'DOB', 'NAT', 'TM', 'LT', 'LTN', 'LT2', 'KEY'])
+    
+    def set_data(self,data):
+        self.df = pd.concat([pd.DataFrame(data, columns=self.df.columns, index=[0]), self.df], ignore_index=True)
+        self.store.put('df', data=self.df.to_dict())
+        print(self.df)
 
 
 #standard app
@@ -75,11 +92,13 @@ class App(MDApp):
             self.camera.connect_camera(enable_analyze_pixels=True)
 
     def build(self):
+        self.scanner_screen = ScannerScreen(name="Scanner")
+        self.list_screen = ListScreen(self.user_data_dir,name="List")
+        
         return MDBoxLayout(
             MDScreenManager(
-                ScannerScreen(name="Scanner"),
-                ListScreen(name="List"),
-                id="screen_manager"
+                self.scanner_screen,
+                self.list_screen,
                 ),
             MDNavigationBar(
                 BaseMDNavigationItem(
@@ -100,10 +119,9 @@ class App(MDApp):
     
     def on_start(self):
         self.dialog = ScannDialog(self.accepted)
-        screen = self.root.get_ids().screen_manager.get_screen("Scanner")
-        self.camera = screen.camera
+        self.camera = self.scanner_screen.camera
         self.camera.bind_on_recv(self.recive_qr_raw)
-        Thread(target=lambda: self.camera.connect_camera(enable_analyze_pixels=True),daemon=True).start()
+        self.camera.connect_camera(enable_analyze_pixels=True)
     
     def recive_qr_raw(self,payload:dict):
         payload["val"] = payload["exp"] > time.time()
@@ -114,7 +132,10 @@ class App(MDApp):
     def accepted(self,payload:dict):
         if self.dialog:
             self.camera.analyze = True
-        print(payload, flush=True)
+        
+        self.list_screen.set_data(payload)
+        
+        
         
 
 if __name__ == "__main__":
