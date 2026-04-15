@@ -7,7 +7,9 @@ from kivy.properties import StringProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.dialog import MDDialog
 from kivy.utils import get_color_from_hex
+from kivy.clock import Clock
 
+from kivymd.uix.widget import MDWidget
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.dialog import (
     MDDialog,
@@ -20,11 +22,13 @@ from kivymd.uix.textfield import MDTextField, MDTextFieldHintText, MDTextFieldLe
 
 
 from camera4kivy.preview import Preview
-from cv2 import QRCodeDetector,cvtColor, COLOR_RGBA2BGR, COLOR_BGR2GRAY
+from cv2 import cvtColor, COLOR_RGBA2BGR, COLOR_BGR2GRAY
 from numpy import frombuffer,uint8
 from pyzbar.pyzbar import decode, ZBarSymbol
 from yarl import URL
 import jwt
+import time
+from threading import Thread
 
 
 class ScannDialog(MDDialog):
@@ -57,14 +61,12 @@ class ScannDialog(MDDialog):
             padding=(dp(4), 0, dp(4), dp(8)),
             )
 
-        btn_cancel = MDButton(style="text")
-        btn_cancel.add_widget(MDButtonText(text="Cancel"))
+        btn_cancel = MDButton(MDButtonText(text="Cancel"),style="text")
 
-        btn_continue = MDButton(style="filled")
-        btn_continue.add_widget(MDButtonText(text="Continue"))
+        btn_continue = MDButton(MDButtonText(text="Continue"),style="filled")
 
         buttons = MDDialogButtonContainer(
-            MDBoxLayout(size_hint_x=1),   # spacer → pushes buttons right
+            MDWidget(),   # spacer → pushes buttons right
             btn_cancel,
             btn_continue,
             spacing=dp(8),
@@ -163,40 +165,70 @@ class ScannerOverlay(MDFloatLayout):
                  width=t, cap="none")
 
 
-# base qrcode scanner screen class
-class ScannerScreen(MDScreen):
-    image_size = StringProperty()
-
-
 class CPreview(Preview):
-    detector = QRCodeDetector()
+    _analyzing = False  # prevent overlapping threads
     on_detect = None
     analyze = True
-    
+    _last_analyze = 0
+    _analyze_interval = 0.2
+
     def __init__(self, **kwargs):
-        
         super().__init__(aspect_ratio = '16:9', **kwargs)
-        
+
     def bind_on_recv(self, on_detect):
         self.on_detect = on_detect
-    
+
     def analyze_pixels_callback(self, pixels, image_size, image_pos, image_scale, mirror):
-        if not self.analyze:
+        if not self.analyze or self._analyzing:
             return
         
-        w, h = image_size
+        now = time.time()
+        if now - self._last_analyze < self._analyze_interval:
+            return
+        self._last_analyze = now
         
-        frame = frombuffer(pixels, dtype=uint8).reshape(h, w, 4)
-        
-        frame = cvtColor(frame, COLOR_RGBA2BGR)
-        
-        gray = cvtColor(frame, COLOR_BGR2GRAY)
-        
-        for qr in decode(gray, symbols=[ZBarSymbol.QRCODE]):
-            data = qr.data.decode()
-            if data.startswith("https://qr"):
-                token = URL(data).query.get("s")
-                data = jwt.decode(token, options={"verify_signature":False})
-                if data.get("LTN") == "Judopass":
-                    if self.on_detect:
-                        self.on_detect(data)
+        # copy pixels before handing off — buffer may be reused
+        pixels_copy = bytes(pixels)
+        self._analyzing = True
+        Thread(
+            target=self._analyze,
+            args=(pixels_copy, image_size),
+            daemon=True
+        ).start()
+
+    def _analyze(self, pixels, image_size):
+        try:
+            w, h = image_size
+            frame = frombuffer(pixels, dtype=uint8).reshape(h, w, 4)
+            frame = cvtColor(frame, COLOR_RGBA2BGR)
+            gray = cvtColor(frame, COLOR_BGR2GRAY)
+
+            for qr in decode(gray, symbols=[ZBarSymbol.QRCODE]):
+                data = qr.data.decode()
+                if data.startswith("https://qr"):
+                    token = URL(data).query.get("s")
+                    data = jwt.decode(token, options={"verify_signature": False})
+                    if data.get("LTN") == "Judopass" and self.on_detect:
+                        Clock.schedule_once(lambda dt, d=data: self.on_detect(d))
+        finally:
+            self._analyzing = False
+
+
+# base qrcode scanner screen class
+class ScannerScreen(MDScreen):
+    camera: CPreview
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.camera = CPreview(size_hint= (1, 1))
+        Clock.schedule_once(self.builds)
+    
+    def builds(self, *args):
+        self.add_widget(
+            MDFloatLayout(
+                self.camera,
+                ScannerOverlay(
+                    size_hint= (1, 1),
+                    pos= (0, 0)
+                )
+            )
+        )
