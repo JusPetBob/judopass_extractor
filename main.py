@@ -13,7 +13,6 @@ import time
 from scanner_page import *
 
 import os
-import pandas as pd
 
 
 class BaseMDNavigationItem(MDNavigationItem):
@@ -39,8 +38,7 @@ class BaseMDNavigationItem(MDNavigationItem):
 class ListScreen(MDScreen):
     store:JsonStore
     path:str
-    df: pd.DataFrame
-
+    df:dict
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -50,12 +48,38 @@ class ListScreen(MDScreen):
             self.path = os.path.join(path, "test_app", "data.json")
         
         self.store = JsonStore(self.path)
-        self.df = pd.DataFrame(columns=['FN', 'LN', 'val', 'exp', 'iss', 'UID', 'NO', 'CID', 'ID', 'DOB', 'NAT', 'TM', 'LT', 'LTN', 'LT2', 'KEY'])
+        
+        cols = ['FN', 'LN', 'val', 'exp', 'iss', 'UID', 'NO', 'CID', 'ID', 'DOB', 'NAT', 'TM', 'LT', 'LTN', 'LT2', 'KEY']
+        
+        if self.store.exists("df"):
+            self.df = self.store.get("df")
+            if set(self.df.keys()) != set(cols):
+                self.df = {i:[] for i in cols}
+        else:
+            self.df = {i:[] for i in cols}
+
     
     def set_data(self,data):
-        self.df = pd.concat([pd.DataFrame(data, columns=self.df.columns, index=[0]), self.df], ignore_index=True)
-        self.store.put('df', data=self.df.to_dict())
+        print(self.df,data)
+        self.df = dict(map(lambda kv, data=data: self.append(kv,data),self.df.items()))
+        #self.df = pd.concat([pd.DataFrame(data, columns=self.df.columns, index=[0]), self.df], ignore_index=True)
+        #self.store.put('df', data=self.df.to_dict())
         print(self.df)
+    
+    def append(self,kv,data):
+        k,v=kv
+        
+        if v is None:
+            v = []
+        
+        v.insert(0,data[k])
+        
+        return k,v
+        
+    
+    def print_data(self):
+        import json
+        print(json.dumps(self.df,indent=4))
 
 
 #standard app
@@ -70,9 +94,14 @@ class App(MDApp):
             item_icon: str,
             item_text: str,
         ):
-        t= time.time()
+        t = time.time()
         
-        self.root.get_ids().screen_manager.current = item_text
+        print(item_text)
+        
+        if item_text == "List":
+            self.list_screen.print_data()
+        
+        self.screen_manager.current = item_text
         
         if item_text == "Scanner":
             self.camera.analyze = True
@@ -93,13 +122,17 @@ class App(MDApp):
 
     def build(self):
         self.scanner_screen = ScannerScreen(name="Scanner")
+        self.camera = self.scanner_screen.camera
+        
         self.list_screen = ListScreen(self.user_data_dir,name="List")
         
+        self.screen_manager = MDScreenManager(
+            self.scanner_screen,
+            self.list_screen
+        )
+        
         return MDBoxLayout(
-            MDScreenManager(
-                self.scanner_screen,
-                self.list_screen,
-                ),
+            self.screen_manager,
             MDNavigationBar(
                 BaseMDNavigationItem(
                     icon="camera",
@@ -119,16 +152,19 @@ class App(MDApp):
     
     def on_start(self):
         self.dialog = ScannDialog(self.accepted)
-        self.camera = self.scanner_screen.camera
         self.camera.bind_on_recv(self.recive_qr_raw)
         self.camera.connect_camera(enable_analyze_pixels=True)
     
     def recive_qr_raw(self,payload:dict):
-        payload["val"] = payload["exp"] > time.time()
-        if self.dialog:
-            self.camera.analyze = False
+        payload["val"] = payload["exp"] > time.time()    
+        
+        if not self.dialog.is_open:
+        
+            self.dialog = ScannDialog(self.accepted)
             self.dialog.show_scan_dialog(payload)
-            
+        
+            self.camera.analyze = False
+        
     def accepted(self,payload:dict):
         if self.dialog:
             self.camera.analyze = True

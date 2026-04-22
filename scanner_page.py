@@ -38,6 +38,7 @@ class ScannDialog(MDDialog):
     _field_lastname = None
     _on_continue = None
     _data = None
+    is_open = False
 
     def __init__(self, on_continue):
         """Construct the dialog once and cache it."""
@@ -79,7 +80,7 @@ class ScannDialog(MDDialog):
             buttons,
             )
 
-        btn_cancel.bind(on_release=lambda *_: self.dismiss())
+        btn_cancel.bind(on_release=lambda *_: self.cancel())
         btn_continue.bind(on_release=lambda *_: self.cont())
         
         self._on_continue = on_continue
@@ -88,6 +89,7 @@ class ScannDialog(MDDialog):
         self,
         data
         ):
+        
         self._data = data
         
         self._dialog_headline.text = "Valid License" if data["val"] else "Invalid License"
@@ -100,11 +102,17 @@ class ScannDialog(MDDialog):
         self._field_lastname.text = data["LN"]
 
         self.open()
+        self.is_open = True
+    
+    def cancel(self):
+        self.dismiss()
+        self.is_open = False
     
     def cont(self):
         self._data["FN"] = self._field_firstname.text
         self._data["LN"] = self._field_lastname.text
         self.dismiss()
+        self.is_open = False
         self._on_continue(self._data)
 
 class ScannerOverlay(MDFloatLayout):

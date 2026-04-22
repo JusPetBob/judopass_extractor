@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,kivymd2,materialyoucolor,pillow,opencv,numpy,pyzbar,yarl,multidict,propcache,pyjwt,cryptography,camera4kivy,gestures4kivy,asynckivy,tzdata,pandas
+requirements = python3,kivy,kivymd2,materialyoucolor,pillow,opencv,numpy,pyzbar,yarl,multidict,propcache,pyjwt,cryptography,camera4kivy,gestures4kivy,asynckivy
 
 android.prebuild_cmd = sudo apt-get update && sudo apt-get install -y autopoint gettext
 
