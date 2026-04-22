@@ -39,6 +39,8 @@ version = 0.1
 # comma separated e.g. requirements = sqlite3,kivy
 requirements = python3,kivy,kivymd2,materialyoucolor,pillow,opencv,numpy,pyzbar,yarl,multidict,propcache,pyjwt,cryptography,camera4kivy,gestures4kivy,asynckivy,tzdata,pandas
 
+android.prebuild_cmd = sudo apt-get update && sudo apt-get install -y autopoint gettext
+
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
 # requirements.source.kivy = ../../kivy
@@ -402,7 +404,7 @@ ios.codesign.allowed = false
 [buildozer]
 
 # (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
-log_level = 1
+log_level = 2
 
 # (int) Display warning if buildozer is run as root (0 = False, 1 = True)
 warn_on_root = 1
