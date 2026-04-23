@@ -37,10 +37,11 @@ class ScannDialog(MDDialog):
     _field_firstname = None
     _field_lastname = None
     _on_continue = None
+    _on_cancel = None
     _data = None
     is_open = False
 
-    def __init__(self, on_continue):
+    def __init__(self, on_continue, on_cancel):
         """Construct the dialog once and cache it."""
         self._dialog_headline = MDDialogHeadlineText(text="Scan Result")
 
@@ -84,6 +85,8 @@ class ScannDialog(MDDialog):
         btn_continue.bind(on_release=lambda *_: self.cont())
         
         self._on_continue = on_continue
+        
+        self._on_cancel = on_cancel
 
     def show_scan_dialog(
         self,
@@ -107,9 +110,11 @@ class ScannDialog(MDDialog):
     def cancel(self):
         self.dismiss()
         self.is_open = False
+        
+        self._on_cancel()
     
     def cont(self):
-        self._data["FN"] = self._field_firstname.text
+        self._data["FN"] = self._field_firstname.text 
         self._data["LN"] = self._field_lastname.text
         self.dismiss()
         self.is_open = False

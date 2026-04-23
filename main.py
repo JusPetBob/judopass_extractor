@@ -156,18 +156,23 @@ class App(MDApp):
         self.camera.connect_camera(enable_analyze_pixels=True)
     
     def recive_qr_raw(self,payload:dict):
-        payload["val"] = payload["exp"] > time.time()    
+        payload["val"] = payload["exp"] > time.time()
+        
+        print(self.dialog.is_open)
         
         if not self.dialog.is_open:
         
-            self.dialog = ScannDialog(self.accepted)
+            self.dialog = ScannDialog(self.accepted,lambda: self.set_camera(True))
             self.dialog.show_scan_dialog(payload)
         
-            self.camera.analyze = False
+            self.set_camera(False)
+    
+    def set_camera(self,t:bool):
+        self.camera.analyze = t
         
     def accepted(self,payload:dict):
         if self.dialog:
-            self.camera.analyze = True
+            self.set_camera(True)
         
         self.list_screen.set_data(payload)
         

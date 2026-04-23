@@ -7,7 +7,7 @@ title = JP Extractor
 package.name = jpextractor
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.judopass
+package.domain = com.judopass.extractor
 
 # (str) Source code where the main.py live
 source.dir = .
