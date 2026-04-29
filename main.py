@@ -6,6 +6,9 @@ from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem, MDNaviga
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.uix.recycleview import MDRecycleView
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.label import MDLabel
 from kivy.storage.jsonstore import JsonStore
 
 import time
@@ -13,6 +16,15 @@ import time
 from scanner_page import *
 
 import os
+
+
+class RowView(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'horizontal'
+        cols = ['FN', 'LN', 'val', 'exp', 'iss', 'UID', 'NO', 'CID', 'ID', 'DOB', 'NAT', 'TM', 'LT', 'LTN', 'LT2', 'KEY']
+        for col in cols:
+            self.add_widget(MDLabel(text=str(kwargs.get(col, ''))))
 
 
 class BaseMDNavigationItem(MDNavigationItem):
@@ -50,6 +62,7 @@ class ListScreen(MDScreen):
         self.store = JsonStore(self.path)
         
         cols = ['FN', 'LN', 'val', 'exp', 'iss', 'UID', 'NO', 'CID', 'ID', 'DOB', 'NAT', 'TM', 'LT', 'LTN', 'LT2', 'KEY']
+        self.cols = cols
         
         if self.store.exists("df"):
             self.df = self.store.get("df")
@@ -57,7 +70,30 @@ class ListScreen(MDScreen):
                 self.df = {i:[] for i in cols}
         else:
             self.df = {i:[] for i in cols}
-
+        
+        # convert df to data for recycleview
+        self.data = []
+        max_len = max(len(v) for v in self.df.values()) if self.df else 0
+        for i in range(max_len):
+            row = {}
+            for col in self.cols:
+                row[col] = self.df[col][i] if i < len(self.df[col]) else ''
+            self.data.append(row)
+        
+        self.recycleview = MDRecycleView()
+        self.recycleview.viewclass = RowView
+        self.recycleview.data = self.data
+        self.add_widget(self.recycleview)
+    
+    def add_row(self, row_dict):
+        self.data.insert(0, row_dict)
+        self.recycleview.refresh_from_data()
+        # also update df
+        for col in self.cols:
+            if col not in self.df:
+                self.df[col] = []
+            self.df[col].insert(0, row_dict.get(col, ''))
+        self.store.put('df', **self.df)
     
     def set_data(self,data):
         print(self.df,data)
@@ -65,6 +101,19 @@ class ListScreen(MDScreen):
         #self.df = pd.concat([pd.DataFrame(data, columns=self.df.columns, index=[0]), self.df], ignore_index=True)
         #self.store.put('df', data=self.df.to_dict())
         print(self.df)
+        
+        # update data for recycleview
+        self.data = []
+        max_len = max(len(v) for v in self.df.values()) if self.df else 0
+        for i in range(max_len):
+            row = {}
+            for col in self.cols:
+                row[col] = self.df[col][i] if i < len(self.df[col]) else ''
+            self.data.append(row)
+        self.recycleview.data = self.data
+        self.recycleview.refresh_from_data()
+        
+        self.store.put('df', **self.df)
     
     def append(self,kv,data):
         k,v=kv
