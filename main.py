@@ -48,11 +48,6 @@ class App(MDApp):
         ):
         t = time.time()
         
-        print(item_text)
-        
-        if item_text == "List":
-            self.list_screen.print_data()
-        
         self.screen_manager.current = item_text
         
         if item_text == "Scanner":
@@ -65,10 +60,15 @@ class App(MDApp):
         #self.root.ids.list_item.set_badge(5)
     
     def on_pause(self):
+        self.list_screen.save_data()
         if self.camera:
             self.camera.disconnect_camera()
     
+    def on_close(self):
+        self.list_screen.save_data()
+    
     def on_resume(self):
+        self.list_screen.get_data()
         if self.camera:
             self.camera.connect_camera(enable_analyze_pixels=True)
 
