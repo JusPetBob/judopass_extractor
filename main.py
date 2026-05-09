@@ -110,8 +110,6 @@ class App(MDApp):
     def recive_qr_raw(self,payload:dict):
         payload["val"] = payload["exp"] > time.time()
         
-        print(self.dialog.is_open)
-        
         if not self.dialog.is_open:
         
             self.dialog = ScannDialog(self.accepted,lambda: self.set_camera(True))

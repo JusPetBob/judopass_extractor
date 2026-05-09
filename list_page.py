@@ -4,10 +4,18 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.divider import MDDivider
-from kivymd.uix.button import MDIconButton
+from kivymd.uix.button import MDIconButton,MDButton,MDButtonText
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.widget import MDWidget
 from kivymd.uix.filemanager import MDFileManager
+from kivymd.uix.dialog import (
+    MDDialog,
+    MDDialogIcon,
+    MDDialogHeadlineText,
+    MDDialogSupportingText,
+    MDDialogButtonContainer,
+)
+
 
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import platform
@@ -69,7 +77,6 @@ class TableRow(MDBoxLayout):
         self.add_widget(layout)
     
     def menu_callback(self, action):
-        print(action)
         self.menu.dismiss()
         if action=="Delete":
             self._parent.remove_item(self._id,self)
@@ -102,6 +109,7 @@ class ListScreen(MDScreen):
         
         self.box.add_widget(
             MDBoxLayout(
+                MDIconButton(icon="trash-can-outline",on_release=lambda _: self.delete_dialog()),
                 MDWidget(),
                 MDIconButton(icon="export-variant",on_release=lambda _: self.file_manager_open()),
                 orientation= 'horizontal',
@@ -122,9 +130,9 @@ class ListScreen(MDScreen):
             minimum_width=self.layout.setter("width")
         )
         
-        self.layout.add_widget(TableRow(self, self.cols, {c:c for c in self.cols},-1))
+        self.setup_columns()
         
-        for i,v in self.df.items():
+        for i,v in reversed(self.df.items()):
             self.layout.add_widget(TableRow(self, self.cols, v, i))
         
         self.rv.add_widget(self.layout)
@@ -134,6 +142,9 @@ class ListScreen(MDScreen):
         self.add_widget(self.box)
         
         self._print_data()
+    
+    def setup_columns(self):
+        self.layout.add_widget(TableRow(self, self.cols, {c:c for c in self.cols},-1))
     
     def get_data(self):
         if self.store.exists("df"):
@@ -197,9 +208,38 @@ class ListScreen(MDScreen):
         wb.save(os.path.join(path,"judopass_export.xlsx"))
 
 
-    def set_data(self,data):
+    def delete_dialog(self):
+        self._dialog = MDDialog(
+            MDDialogIcon(icon="trash-can-outline"),
+            MDDialogHeadlineText(text="Are you sure?"),
+            MDDialogSupportingText(text="This Action will delete all avalabile data"),
+            MDDialogButtonContainer(
+                MDWidget(),
+                MDButton(MDButtonText(text="Cancel"),style="text",on_release=lambda _:self._dialog.dismiss()),
+                MDButton(MDButtonText(text="Continue"),style="text",on_release=lambda _:self.delete_data())
+            )
+        )
         
-        self.df[str(int(max(self.df.keys()))+1)] = data
+        self._dialog.open()
+    
+    def delete_data(self):
+        if self._dialog:
+            self._dialog.dismiss()
+        
+        self.layout.clear_widgets()
+        self.df = {}
+        self.setup_columns()
+        #self.save_data()
+
+
+    def set_data(self,data):
+        id = str(int(max(self.df.keys()))+1)
+        
+        self.df[id] = data
+        
+        self.layout.add_widget(TableRow(self,self.cols,data,id),-1)
+        
+        self.save_data()
         
         self._print_data()
 
