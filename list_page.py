@@ -149,7 +149,11 @@ class ListScreen(MDScreen):
     def get_data(self):
         if self.store.exists("df"):
             self.df = self.store.get("df").get("values")
-            if not isinstance(self.df,dict) or set(list(self.df.values())[0].keys()) != set(self.cols):
+            if not isinstance(self.df,dict):
+                self.df = {}
+            elif len(list(self.df.values())) < 1:
+                self.df = {}
+            elif set(list(self.df.values())[0].keys()) != set(self.cols):
                 self.df = {}
         else:
             self.df = {}
@@ -233,7 +237,11 @@ class ListScreen(MDScreen):
 
 
     def set_data(self,data):
-        id = str(int(max(self.df.keys()))+1)
+        keys = self.df.keys()
+        if len(keys) < 1:
+            id = 1
+        else:
+            id = str(int(max(keys))+1)
         
         self.df[id] = data
         
