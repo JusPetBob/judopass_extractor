@@ -16,13 +16,13 @@ from kivymd.uix.dialog import (
     MDDialogButtonContainer,
 )
 
-
 from kivy.storage.jsonstore import JsonStore
 from kivy.utils import platform
 from kivy.metrics import dp
 
 import os
 import openpyxl
+from threading import Thread
 
 class TableRow(MDBoxLayout):
     orientation= 'horizontal'
@@ -199,6 +199,9 @@ class ListScreen(MDScreen):
         self.exit_manager()
         
         self.cleanup_numbering()
+        Thread(target=self.export_excel, args=(path,), daemon=True).start()
+
+    def export_excel(self, path:str):
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Judopass_data"
@@ -240,7 +243,7 @@ class ListScreen(MDScreen):
         self.layout.clear_widgets()
         self.df = {}
         self.setup_columns()
-        #self.save_data()
+        self.save_data()
 
 
     def set_data(self,data):
@@ -248,7 +251,7 @@ class ListScreen(MDScreen):
         if len(keys) < 1:
             id = 1
         else:
-            id = str(int(max(keys))+1)
+            id = str(int(max([int(i) for i in keys]))+1)
         
         self.df[id] = data
         
@@ -257,8 +260,6 @@ class ListScreen(MDScreen):
         self.save_data()
         
         self._print_data()
-
-        self.save_data()
     
     def _print_data(self):
         import json

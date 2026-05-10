@@ -209,3 +209,6 @@ __marimo__/
 
 # project specific
 !buildozer.spec
+
+.buildozer/
+bin/

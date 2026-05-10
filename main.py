@@ -6,9 +6,6 @@ from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem, MDNaviga
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.screenmanager import MDScreenManager
 
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.label import MDLabel
-
 import time
 
 from scanner_page import *
@@ -38,6 +35,8 @@ class BaseMDNavigationItem(MDNavigationItem):
 class App(MDApp):
     dialog:ScannDialog = None
     camera = None
+    SCREEN_SCANNER = "Scanner"
+    SCREEN_LIST = "List"
     
     def on_switch_tabs(
             self,
@@ -50,7 +49,7 @@ class App(MDApp):
         
         self.screen_manager.current = item_text
         
-        if item_text == "Scanner":
+        if item_text == self.SCREEN_SCANNER:
             self.camera.analyze = True
             #Clock.schedule_once(lambda dt: self.camera.connect_camera(enable_analyze_pixels=True))
         else:
@@ -75,10 +74,10 @@ class App(MDApp):
             self.camera.connect_camera(enable_analyze_pixels=True)
 
     def build(self):
-        self.scanner_screen = ScannerScreen(name="Scanner")
+        self.scanner_screen = ScannerScreen(name=self.SCREEN_SCANNER)
         self.camera = self.scanner_screen.camera
         
-        self.list_screen = ListScreen(self.user_data_dir,name="List")
+        self.list_screen = ListScreen(self.user_data_dir,name=self.SCREEN_LIST)
         
         self.screen_manager = MDScreenManager(
             self.scanner_screen,
@@ -97,7 +96,7 @@ class App(MDApp):
                     icon="format-list-bulleted",
                     text="List",
                     ),
-                on_switch_tabs=lambda *args: self.on_switch_tabs(*args)
+                on_switch_tabs=self.on_switch_tabs
                 ),
             orientation= "vertical",
             md_bg_color= self.theme_cls.backgroundColor
@@ -106,15 +105,16 @@ class App(MDApp):
     
     def on_start(self):
         self.dialog = ScannDialog(self.accepted,lambda: self.set_camera(True))
-        self.camera.bind_on_recv(self.recive_qr_raw)
+        self.camera.bind_on_recv(self.receive_qr_raw)
         self.camera.connect_camera(enable_analyze_pixels=True)
     
-    def recive_qr_raw(self,payload:dict):
-        payload["val"] = payload["exp"] > time.time()
+    def receive_qr_raw(self,payload:dict):
+        exp = payload.get("exp")
+        payload["val"] = exp and exp > time.time()
         
         if not self.dialog.is_open:
         
-            self.dialog = ScannDialog(self.accepted,lambda: self.set_camera(True))
+            #self.dialog = ScannDialog(self.accepted,lambda: self.set_camera(True))
             self.dialog.show_scan_dialog(payload)
         
             self.set_camera(False)

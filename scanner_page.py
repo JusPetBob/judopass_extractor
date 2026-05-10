@@ -1,9 +1,7 @@
 from kivymd.uix.floatlayout import MDFloatLayout
-from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.properties import NumericProperty, ListProperty
 from kivy.graphics import Color, Rectangle, Line
 from kivy.metrics import dp
-from kivy.properties import StringProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.dialog import MDDialog
 from kivy.utils import get_color_from_hex
@@ -185,6 +183,7 @@ class CPreview(Preview):
     analyze = True
     _last_analyze = 0
     _analyze_interval = 0.2
+    QR_PREFIX = "https://qr"
 
     def __init__(self, **kwargs):
         super().__init__(aspect_ratio = '16:9', **kwargs)
@@ -219,10 +218,10 @@ class CPreview(Preview):
 
             for qr in decode(gray, symbols=[ZBarSymbol.QRCODE]):
                 data = qr.data.decode()
-                if data.startswith("https://qr"):
+                if data.startswith(self.QR_PREFIX):
                     token = URL(data).query.get("s")
                     data = jwt.decode(token, options={"verify_signature": False})
-                    if data.get("LTN") == "Judopass" and self.on_detect:
+                    if data.get("iss") == "DokuMe" and self.on_detect:
                         Clock.schedule_once(lambda dt, d=data: self.on_detect(d))
         finally:
             self._analyzing = False
