@@ -2,12 +2,13 @@
 
 This project aims to create an Android app that is capable of extracting data (more info [here](#expected-output)) from the judopass app's Qr code, for use in tournaments or identification.
 
-(This programm is still in alpha)
+(This programm is still in beta)
 
 ## Prerequisits:
-:warning: I, as the creator, and potential contributors are not to be held liable for any misuse of the provided data.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; I, as the creator, cannot promise a continuing update schedule.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The data stored is **not encrypted** at this point.
+:warning: 
+ - I, as the creator, and potential contributors are not to be held liable for any misuse of the provided data.
+ - I, as the creator, cannot promise a continuing update schedule.
+ - The data stored is **not encrypted** at this point.
 
 **This project has no affiliation with the Judopass app or DokuMe.**
 
