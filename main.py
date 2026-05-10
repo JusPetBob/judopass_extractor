@@ -63,6 +63,8 @@ class App(MDApp):
         self.list_screen.save_data()
         if self.camera:
             self.camera.disconnect_camera()
+        
+        return True
     
     def on_close(self):
         self.list_screen.save_data()
