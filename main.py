@@ -126,11 +126,9 @@ class App(MDApp):
         
         self.list_screen.set_data(payload)
         
-        
-        
 
 if __name__ == "__main__":
     if platform == "android":
         from android.permissions import request_permissions, Permission
-        request_permissions([Permission.CAMERA])
+        request_permissions([Permission.CAMERA, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
     App().run()

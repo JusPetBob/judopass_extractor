@@ -58,7 +58,7 @@ class TableRow(MDBoxLayout):
             options.bind(on_release=lambda x: self.menu.open())
         
         else:
-            options = MDBoxLayout(width=40.0,size_hint=(None,None))
+            options = MDWidget(size=(dp(40),dp(40)),size_hint=(None,None))
         
         layout.add_widget(options)
         
@@ -171,8 +171,15 @@ class ListScreen(MDScreen):
     
     
     def file_manager_open(self):
-        self.file_manager.show(
-            os.path.expanduser("~"))  # output manager to the screen
+        if platform == "android":
+            from android.storage import primary_external_storage_path
+            self.file_manager.show(
+                primary_external_storage_path()
+            )  # output manager to the screen
+        else:
+            self.file_manager.show(
+                os.path.expanduser("~")
+            )  # output manager to the screen
         self.manager_open = True
 
     def exit_manager(self, *args):
