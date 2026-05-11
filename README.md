@@ -34,7 +34,7 @@ sudo apt install python3.11 python3.11-venv &&
     python3.11 -m venv .buildozer_venv &&
     source .buildozer_venv/bin/activate &&
     pip install buildozer cython==0.29.33 &&
-    buildozer android release
+    buildozer android clean debug
 ```
 
 If you get an `python3.11 not found` error, run:
@@ -138,5 +138,6 @@ What happens on deletion?
  | feature | status |
  | --- | :---: |
  | adding the inline edit functionality | :x: |
+ | adding an icon | :x: |
  | **Potential features** |  |
  | if wanted adding csv export | :x: |
