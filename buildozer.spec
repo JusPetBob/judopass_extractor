@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,kivymd2,materialyoucolor,pillow,opencv,numpy,pyzbar,yarl,multidict,propcache,pyjwt,cryptography,camera4kivy,gestures4kivy,asynckivy,asyncgui,et-xmlfile,openpyxl
+requirements = python3,kivy,kivymd2,materialyoucolor,pillow,opencv,numpy,pyzbar,yarl,multidict,propcache,pyjwt==2.4.0,camera4kivy,gestures4kivy,asynckivy,asyncgui,et-xmlfile,openpyxl
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -104,7 +104,7 @@ android.permissions = CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,reques
 android.api = 34
 
 # (int) Minimum API your APK / AAB will support.
-#android.minapi = 24
+android.minapi = 24
 
 # (int) Android SDK version to use
 #android.sdk = 20
